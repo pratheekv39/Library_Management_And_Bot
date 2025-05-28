@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LibraryBot Chat</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #eef2f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  .chat-container {
+    width: 100%;
+    max-width: 600px;
+    height: 90vh;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+  header {
+    background-color: #4a90e2;
+    color: white;
+    padding: 1rem;
+    font-size: 1.5rem;
+    text-align: center;
+    font-weight: bold;
+  }
+  .user-info {
+    padding: 0.8rem 1rem;
+    background: #f0f4ff;
+    border-bottom: 1px solid #ccc;
+    font-size: 1rem;
+    text-align: right;
+  }
+  .user-info b {
+    color: #4a90e2;
+  }
+  #chat-box {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .msg {
+    max-width: 75%;
+    padding: 0.8rem 1rem;
+    border-radius: 16px;
+    font-size: 1rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .user {
+    background-color: #d1ffd6;
+    align-self: flex-end;
+    border-bottom-right-radius: 0;
+  }
+  .bot {
+    background-color: #e1f0ff;
+    align-self: flex-start;
+    border-bottom-left-radius: 0;
+  }
+  form {
+    display: flex;
+    border-top: 1px solid #ccc;
+    background: #f9f9f9;
+  }
+  input {
+    flex: 1;
+    border: none;
+    padding: 1rem;
+    font-size: 1rem;
+    outline: none;
+    background: #fff;
+  }
+  button {
+    border: none;
+    padding: 1rem 1.5rem;
+    background: #4a90e2;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  button:hover {
+    background: #357ace;
+  }
+</style>
+</head>
+<body>
+  <div class="chat-container">
+    <header>📚 LibraryBot</header>
+    <div class="user-info">
+      Logged in as <b>{{ username }}</b> (<i>{{ role }}</i>) | <a href="/logout">Logout</a>
+    </div>
+    <div id="chat-box"></div>
+    <form id="chat-form">
+      <input type="text" id="user-input" placeholder="Type a message..." autocomplete="off" required />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById("chat-box");
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("user-input");
+
+    function appendMessage(text, sender) {
+      const msg = document.createElement("div");
+      msg.className = "msg " + sender;
+      msg.textContent = text;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Show initial help message
+    appendMessage("Type 'help' to see available commands.", "bot");
+
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      const msg = input.value.trim();
+      if (!msg) return;
+      appendMessage(msg, "user");
+      input.value = "";
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: msg })
+        });
+        const data = await res.json();
+        appendMessage(data.response, "bot");
+      } catch (error) {
+        appendMessage("❌ Connection error.", "bot");
+      }
+    });
+  </script>
+</body>
+</html>
