@@ -1,0 +1,10 @@
+                                <tbody>
+                                    {% for record in history %}
+                                        <tr>
+                                            <td>{{ record.book_title }}</td>
+                                            <td>{{ record.book_author }}</td>
+                                            <td>{{ record.borrow_date.strftime('%Y-%m-%d %H:%M') if record.borrow_date else '-' }}</td>
+                                            <td>{{ record.return_date.strftime('%Y-%m-%d %H:%M') if record.return_date else 'Not returned' }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody> 

@@ -103,6 +103,9 @@
     <header>📚 LibraryBot</header>
     <div class="user-info">
       Logged in as <b>{{ username }}</b> (<i>{{ role }}</i>) | <a href="/logout">Logout</a>
+      {% if role == 'student' %}
+        | <a href="{{ url_for('student_dashboard') }}">Back to Dashboard</a>
+      {% endif %}
     </div>
     <div id="chat-box"></div>
     <form id="chat-form">

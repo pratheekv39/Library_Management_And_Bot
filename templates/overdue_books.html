@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Overdue Books - LibraryBot{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Overdue Books</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if overdue_books %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Book Title</th>
+                    <th>Author</th>
+                    <th>Borrower</th>
+                    <th>Due Date</th>
+                    <th>Overdue Days</th>
+                    <th>Fine Amount</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for book in overdue_books %}
+                <tr>
+                    <td>{{ book.title }}</td>
+                    <td>{{ book.author }}</td>
+                    <td>{{ book.borrower.username }}</td>
+                    <td>{{ book.due_date }}</td>
+                    <td>{{ book.overdue_days }}</td>
+                    <td>${{ "%.2f"|format(book.fine) }}</td>
+                    <td>
+                        <a href="{{ url_for('send_reminder', book_id=book.book_id) }}" class="btn btn-warning btn-sm">
+                            Send Reminder
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        No overdue books found.
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

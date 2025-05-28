@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - LibraryBot{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <!-- Profile Details -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Your Profile</h4>
+                </div>
+                <div class="card-body text-center">
+                    {% if user.profile_pic %}
+                        <img src="{{ url_for('static', filename='profile_pics/' + user.profile_pic) }}" 
+                             class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='images/default_profile.png') }}" 
+                             class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% endif %}
+                    <h5>{{ user.username }}</h5>
+                    <p class="text-muted">{{ user.email }}</p>
+                    <p class="text-muted">{{ user.phone }}</p>
+                    <p class="text-muted">{{ user.address }}</p>
+                    <a href="{{ url_for('profile') }}" class="btn btn-primary">Edit Profile</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- History and Fines -->
+        <div class="col-md-8">
+            <!-- Reading History -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Reading History</h4>
+                </div>
+                <div class="card-body">
+                    {% if reading_history %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Book Title</th>
+                                        <th>Author</th>
+                                        <th>Borrowed Date</th>
+                                        <th>Returned Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for record in reading_history %}
+                                        <tr>
+                                            <td>{{ record.book_title }}</td>
+                                            <td>{{ record.book_author }}</td>
+                                            <td>{{ record.borrow_date.strftime('%Y-%m-%d %H:%M') if record.borrow_date else '-' }}</td>
+                                            <td>{{ record.return_date.strftime('%Y-%m-%d %H:%M') if record.return_date else 'Not returned' }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No reading history available.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Fine History -->
+            <div class="card">
+                <div class="card-header">
+                    <h4>Fine History</h4>
+                </div>
+                <div class="card-body">
+                    {% if fine_history %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Amount</th>
+                                        <th>Reason</th>
+                                        <th>Date Issued</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for fine in fine_history %}
+                                        <tr>
+                                            <td>${{ "%.2f"|format(fine.amount) }}</td>
+                                            <td>{{ fine.reason }}</td>
+                                            <td>{{ fine.created_at.strftime('%Y-%m-%d %H:%M') if fine.created_at else '-' }}</td>
+                                            <td>
+                                                {% if fine.paid %}
+                                                    <span class="badge bg-success">Paid</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Unpaid</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No fine history available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

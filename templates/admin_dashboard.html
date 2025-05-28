@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - LibraryBot{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Total Books</h6>
+                            <h2 class="mt-2 mb-0">{{ stats.total_books }}</h2>
+                        </div>
+                        <i class="fas fa-book fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Active Students</h6>
+                            <h2 class="mt-2 mb-0">{{ stats.active_students }}</h2>
+                        </div>
+                        <i class="fas fa-users fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Current Borrows</h6>
+                            <h2 class="mt-2 mb-0">{{ stats.current_borrows }}</h2>
+                        </div>
+                        <i class="fas fa-book-reader fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Overdue Books</h6>
+                            <h2 class="mt-2 mb-0">{{ stats.overdue_books }}</h2>
+                        </div>
+                        <i class="fas fa-exclamation-circle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Quick Actions -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('manage_books') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add New Book
+                        </a>
+                        <a href="{{ url_for('manage_categories') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-tags me-2"></i>Manage Categories
+                        </a>
+                        <a href="{{ url_for('manage_students') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-user-graduate me-2"></i>Manage Students
+                        </a>
+                        <a href="{{ url_for('manage_fines') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-dollar-sign me-2"></i>Manage Fines
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Activity</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ activity.description }}</h6>
+                                <small class="text-muted">{{ activity.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </div>
+                            <small class="text-muted">{{ activity.user.username }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-8">
+            <!-- Overdue Books -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Overdue Books</h5>
+                    <a href="{{ url_for('overdue_books') }}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if overdue_books %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Book</th>
+                                    <th>Student</th>
+                                    <th>Due Date</th>
+                                    <th>Est. Fine</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for book in overdue_books %}
+                                <tr>
+                                    <td>{{ book.title }} by {{ book.author }}</td>
+                                    <td>{{ book.borrower.username }}</td>
+                                    <td>{{ book.due_date.strftime('%Y-%m-%d') if book.due_date else '-' }}</td>
+                                    <td>${{ "%.2f"|format(book.fine) if book.fine > 0 else '0.00' }}</td>
+                                    <td>
+                                        <!-- Actions for overdue books -->
+                                        <button class="btn btn-sm btn-warning" title="Send Reminder" disabled>
+                                             <i class="fas fa-bell"></i>
+                                        </button>
+                                         <a href="{{ url_for('return_book_route', book_id=book.book_id) }}" 
+                                            class="btn btn-sm btn-success" title="Mark Returned">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                         <button class="btn btn-sm btn-danger" title="Levy Fine" disabled>
+                                            <i class="fas fa-file-invoice-dollar"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No overdue books at the moment.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Recent Borrows -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Borrows</h5>
+                    <a href="{{ url_for('admin_borrow_history') }}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_borrows %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Book</th>
+                                    <th>Student</th>
+                                    <th>Borrow Date</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for borrow in recent_borrows %}
+                                <tr>
+                                    <td>{{ borrow.book.title }} by {{ borrow.book.author }}</td>
+                                    <td>{{ borrow.student.username }}</td>
+                                    <td>{{ borrow.issue_date.strftime('%Y-%m-%d') if borrow.issue_date else '-' }}</td>
+                                    <td>{{ borrow.due_date.strftime('%Y-%m-%d') if borrow.due_date else '-' }}</td>
+                                    <td>
+                                        {% if borrow.returned %}
+                                        <span class="badge bg-success">Returned</span>
+                                        {% elif borrow.is_overdue %}
+                                        <span class="badge bg-danger">Overdue</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">Borrowed</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No recent borrows found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

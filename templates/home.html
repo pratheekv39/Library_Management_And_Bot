@@ -1,47 +1,410 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>MCE | LibraryBot - Home</title>
-<style>
-  body {
-    margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    height: 100vh; color: #fff;
-  }
-  h1 {
-    font-weight: 700; margin-bottom: 2rem; font-size: 2.5rem;
-  }
-  .btn-container {
-    display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center;
-  }
-  a.button {
-    background: #fff; color: #764ba2; font-weight: 700;
-    padding: 1rem 2rem; border-radius: 8px; text-decoration: none;
-    font-size: 1.1rem; box-shadow: 0 8px 15px rgba(0,0,0,0.2);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    min-width: 160px; text-align: center;
-  }
-  a.button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 20px rgba(0,0,0,0.3);
-  }
-  .footer {
-    position: absolute; bottom: 1rem; font-size: 0.9rem; color: #ddd;
-  }
-</style>
-</head>
-<body>
-  <h1>Welcome to MCE | LibraryBot</h1>
-  <div class="btn-container">
-    <a href="/admin/login" class="button">Admin Login</a>
-    <a href="/student/login" class="button">Student Login</a>
-    <a href="/student/signup" class="button">Student Sign Up</a>
-  </div>
-  <div class="footer">
-    &copy; 2025 MCE | LibraryBot. All rights reserved.
-  </div>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Welcome to LibraryBot{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Hero Section -->
+    <div class="row align-items-center mb-5">
+        <div class="col-md-6">
+            <h1 class="display-4 mb-4">Welcome to LibraryBot</h1>
+            <p class="lead mb-4">
+                Your digital companion for seamless library management. Browse books, track your reading history,
+                and manage your library experience all in one place.
+            </p>
+            {% if user %}
+            <div class="mt-4">
+                <div class="d-flex align-items-center mb-3">
+                    {% if user.profile_pic %}
+                    <img src="{{ url_for('static', filename='profile_pics/' + user.profile_pic) }}" 
+                         class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='images/default_profile.png') }}" 
+                         class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                    {% endif %}
+                    <div>
+                        <h4 class="mb-0">Welcome, {{ user.username }}!</h4>
+                        <p class="text-muted mb-0">You are logged in as {{ user.role }}.</p>
+                    </div>
+                </div>
+                <a href="{{ url_for('chat') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-arrow-right me-2"></i>Continue to Library
+                </a>
+            </div>
+            {% else %}
+            <div class="d-grid gap-2 d-md-flex">
+                <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#studentAuthModal">
+                    <i class="fas fa-sign-in-alt me-2"></i>Student Login
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-lg" data-bs-toggle="modal" data-bs-target="#adminLoginModal">
+                    <i class="fas fa-user-shield me-2"></i>Admin Login
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/library-hero.jpg') }}" 
+                 alt="Library" class="img-fluid rounded shadow">
+        </div>
+    </div>
+
+    <!-- Student Authentication Modal -->
+    <div class="modal fade" id="studentAuthModal" tabindex="-1" aria-labelledby="studentAuthModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="studentAuthModalLabel">Student Authentication</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Content will be dynamically loaded or shown -->
+                    <div id="studentLoginForm">
+                        <h4 class="text-center mb-4">Student Login</h4>
+                        <div id="studentLoginError" class="alert alert-danger" style="display: none;"></div>
+                        <form id="studentLoginSubmitForm" action="{{ url_for('student_login') }}" method="POST">
+                            <div class="mb-3">
+                                <label for="studentUsername" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="studentUsername" name="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="studentPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="studentPassword" name="password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Login</button>
+                        </form>
+                        <p class="text-center mt-3">Don't have an account? <a href="#" id="showStudentSignup">Sign Up</a></p>
+                    </div>
+
+                    <div id="studentSignupForm" style="display: none;">
+                        <h4 class="text-center mb-4">Student Sign Up</h4>
+                         <div id="studentSignupError" class="alert alert-danger" style="display: none;"></div>
+                         <div id="studentSignupSuccess" class="alert alert-success" style="display: none;"></div>
+                        <form id="studentSignupSubmitForm" action="{{ url_for('student_signup') }}" method="POST" enctype="multipart/form-data">
+                             <div class="mb-3">
+                                <label for="signupUsername" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="signupUsername" name="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="signupPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="signupPassword" name="password" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirmSignupPassword" class="form-label">Confirm Password</label>
+                                <input type="password" class="form-control" id="confirmSignupPassword" name="confirm_password" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="signupEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="signupEmail" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="signupPhone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="signupPhone" name="phone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="signupProfilePic" class="form-label">Profile Picture</label>
+                                <input type="file" class="form-control" id="signupProfilePic" name="profile_pic" accept="image/*">
+                            </div>
+                             <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+                        </form>
+                         <p class="text-center mt-3">Already have an account? <a href="#" id="showStudentLogin">Login here</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     <!-- Admin Login Modal -->
+    <div class="modal fade" id="adminLoginModal" tabindex="-1" aria-labelledby="adminLoginModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="adminLoginModalLabel">Admin Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                     <div id="adminLoginError" class="alert alert-danger" style="display: none;"></div>
+                    <form id="adminLoginSubmitForm" action="{{ url_for('admin_login') }}" method="POST">
+                        <div class="mb-3">
+                            <label for="adminUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="adminUsername" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="adminPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="adminPassword" name="password" required>
+                        </div>
+                         <button type="submit" class="btn btn-primary w-100">Login</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row mb-5">
+        <div class="col-12 text-center mb-4">
+            <h2>Features</h2>
+            <p class="lead text-muted">Discover what makes LibraryBot special</p>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-book fa-3x text-primary mb-3"></i>
+                    <h3 class="h5">Easy Book Management</h3>
+                    <p class="text-muted">
+                        Browse, borrow, and return books with just a few clicks. Keep track of your reading
+                        history and manage your borrowed books efficiently.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-circle fa-3x text-primary mb-3"></i>
+                    <h3 class="h5">Personalized Profile</h3>
+                    <p class="text-muted">
+                        Create and manage your profile with ease. Upload a profile picture, update your
+                        contact information, and track your reading preferences.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-bell fa-3x text-primary mb-3"></i>
+                    <h3 class="h5">Smart Notifications</h3>
+                    <p class="text-muted">
+                        Stay informed about due dates, fines, and new book arrivals. Receive timely
+                        notifications to manage your library activities effectively.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="row mb-5">
+        <div class="col-12 text-center mb-4">
+            <h2>Library Statistics</h2>
+            <p class="lead text-muted">Get a quick overview of our library</p>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="display-4 text-primary">{{ stats.total_books }}</h3>
+                    <p class="text-muted">Total Books</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="display-4 text-primary">{{ stats.available_books }}</h3>
+                    <p class="text-muted">Available Books</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="display-4 text-primary">{{ stats.total_students }}</h3>
+                    <p class="text-muted">Active Students</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="display-4 text-primary">{{ stats.total_borrows }}</h3>
+                    <p class="text-muted">Total Borrows</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    {% if not user %}
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <div class="card bg-primary text-white">
+                <div class="card-body p-5">
+                    <h2 class="mb-4">Ready to Get Started?</h2>
+                    <p class="lead mb-4">
+                        Join our library community today and start your reading journey with LibraryBot.
+                    </p>
+                    <button type="button" class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#studentAuthModal">
+                        <i class="fas fa-user-plus me-2"></i>Sign Up Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get modals and forms
+        const studentAuthModal = new bootstrap.Modal(document.getElementById('studentAuthModal'));
+        const adminLoginModal = new bootstrap.Modal(document.getElementById('adminLoginModal'));
+
+        const studentLoginForm = document.getElementById('studentLoginForm');
+        const studentSignupForm = document.getElementById('studentSignupForm');
+
+        const studentLoginSubmitForm = document.getElementById('studentLoginSubmitForm');
+        const studentSignupSubmitForm = document.getElementById('studentSignupSubmitForm');
+        const adminLoginSubmitForm = document.getElementById('adminLoginSubmitForm');
+
+        const studentLoginError = document.getElementById('studentLoginError');
+        const studentSignupError = document.getElementById('studentSignupError');
+        const studentSignupSuccess = document.getElementById('studentSignupSuccess');
+        const adminLoginError = document.getElementById('adminLoginError');
+
+        // Get links/buttons that open modals
+        const studentLoginLink = document.querySelector('a[href="{{ url_for('student_login') }}"]');
+        const adminLoginLink = document.querySelector('a[href="{{ url_for('admin_login') }}"]');
+        const studentSignupLinkHero = document.querySelector('a[href="{{ url_for('student_signup') }}"]');
+
+        // Get links for switching between login/signup forms
+        const showStudentSignupLink = document.getElementById('showStudentSignup');
+        const showStudentLoginLink = document.getElementById('showStudentLogin');
+
+        // Function to show a specific student form
+        function showStudentForm(formId) {
+            studentLoginForm.style.display = 'none';
+            studentSignupForm.style.display = 'none';
+            if (formId === 'login') {
+                studentLoginForm.style.display = 'block';
+                studentAuthModal._element.querySelector('.modal-title').textContent = 'Student Login';
+            } else if (formId === 'signup') {
+                studentSignupForm.style.display = 'block';
+                 studentAuthModal._element.querySelector('.modal-title').textContent = 'Student Sign Up';
+            }
+             // Hide previous messages
+            studentLoginError.style.display = 'none';
+            studentSignupError.style.display = 'none';
+            studentSignupSuccess.style.display = 'none';
+        }
+
+        // Event listeners for showing modals
+        if (studentLoginLink) {
+             studentLoginLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                showStudentForm('login');
+                studentAuthModal.show();
+            });
+        }
+
+         if (adminLoginLink) {
+            adminLoginLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                adminLoginError.style.display = 'none'; // Hide previous errors
+                adminLoginModal.show();
+            });
+         }
+
+         if (studentSignupLinkHero) {
+             studentSignupLinkHero.addEventListener('click', function(e) {
+                 e.preventDefault();
+                 showStudentForm('signup');
+                 studentAuthModal.show();
+             });
+         }
+
+        // Event listeners for switching forms within student modal
+        if (showStudentSignupLink) {
+            showStudentSignupLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                showStudentForm('signup');
+            });
+        }
+
+         if (showStudentLoginLink) {
+            showStudentLoginLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                showStudentForm('login');
+            });
+        }
+
+        // Function to handle AJAX form submission
+        async function handleFormSubmit(event, form, errorElement, successElement) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            const actionUrl = form.getAttribute('action');
+
+            // Hide previous messages
+            if (errorElement) errorElement.style.display = 'none';
+            if (successElement) successElement.style.display = 'none';
+
+            try {
+                const response = await fetch(actionUrl, {
+                    method: 'POST',
+                    body: formData // FormData handles headers for multipart/form-data
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Success
+                    if (successElement) {
+                         successElement.textContent = data.message;
+                         successElement.style.display = 'block';
+                          // Optional: Clear form fields on success
+                          form.reset();
+                    }
+                    // Reload the page after a short delay to show logged-in state
+                    setTimeout(function() {
+                         window.location.reload();
+                    }, 1000); // Reload after 1 second
+
+                } else {
+                    // Error
+                    if (errorElement) {
+                        errorElement.textContent = data.message || 'An error occurred.';
+                        errorElement.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                if (errorElement) {
+                    errorElement.textContent = 'Network error or server unreachable.';
+                    errorElement.style.display = 'block';
+                }
+            }
+        }
+
+        // Add submit listeners to forms
+        if (studentLoginSubmitForm) {
+            studentLoginSubmitForm.addEventListener('submit', function(e) {
+                handleFormSubmit(e, this, studentLoginError, null);
+            });
+        }
+
+        if (studentSignupSubmitForm) {
+             studentSignupSubmitForm.addEventListener('submit', function(e) {
+                 handleFormSubmit(e, this, studentSignupError, studentSignupSuccess);
+             });
+        }
+
+         if (adminLoginSubmitForm) {
+            adminLoginSubmitForm.addEventListener('submit', function(e) {
+                handleFormSubmit(e, this, adminLoginError, null);
+            });
+         }
+
+         // Initial state: show login form if student auth modal is shown by default (optional)
+         // showStudentForm('login');
+    });
+</script>
+{% endblock %}
